@@ -156,16 +156,21 @@
                         <h3 class="text-xl sm:text-2xl font-black leading-tight uppercase italic">Reunión de Juveniles</h3>
                         <div class="flex flex-wrap justify-center sm:justify-start gap-4 mt-2">
                             <span class="flex items-center gap-1 text-sm font-bold text-gray-500 dark:text-gray-400">
-                                <i data-lucide="clock" class="w-4 h-4"></i> 9:00 PM
+                                <i data-lucide="video" class="w-4 h-4 text-youthPrimary"></i> Online
                             </span>
                             <span class="flex items-center gap-1 text-sm font-bold text-gray-500 dark:text-gray-400">
-                                <i data-lucide="map-pin" class="w-4 h-4"></i> Auditorio Principal
+                                <i data-lucide="clock" class="w-4 h-4"></i> 9:00 PM
                             </span>
                         </div>
                     </div>
-                    <button id="reminder-btn" onclick="scheduleNotifications()" class="w-full sm:w-auto bg-youthPrimary text-white px-6 py-3 rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-105 transition flex items-center justify-center gap-2">
-                        <i data-lucide="bell" class="w-4 h-4"></i> Recuérdame
-                    </button>
+                    <div class="flex flex-col gap-2 w-full sm:w-auto">
+                        <button id="reminder-btn" onclick="scheduleNotifications()" class="w-full sm:w-auto bg-youthPrimary text-white px-6 py-3 rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-105 transition flex items-center justify-center gap-2">
+                            <i data-lucide="bell" class="w-4 h-4"></i> Recuérdame
+                        </button>
+                        <button id="cancel-reminder-btn" onclick="cancelNotifications()" class="hidden w-full sm:w-auto bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-6 py-2 rounded-xl font-bold uppercase text-[10px] tracking-wider hover:bg-red-100 hover:text-red-500 dark:hover:bg-red-900/30 transition flex items-center justify-center gap-2">
+                            <i data-lucide="bell-off" class="w-3 h-3"></i> Desactivar Avisos
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -221,38 +226,48 @@
             { id: 5, title: "Biblia 101", date: "18 Ene, 2024", category: "Fe", content: "Herramientas prácticas para que tu tiempo con Dios sea dinámico y profundo. No es solo leer, es conectar con el autor de la vida." }
         ];
 
+        let activeTimeouts = [];
+
         lucide.createIcons();
 
         // LÓGICA DE NOTIFICACIONES PROGRAMADAS
         async function scheduleNotifications() {
             if (!("Notification" in window)) {
-                alert("Este navegador no soporta notificaciones de escritorio.");
+                alert("Este navegador no soporta notificaciones.");
                 return;
             }
 
             const permission = await Notification.requestPermission();
+            const btn = document.getElementById('reminder-btn');
+            const cancelBtn = document.getElementById('cancel-reminder-btn');
             
             if (permission === "granted") {
-                const btn = document.getElementById('reminder-btn');
-                btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> ¡Programado!`;
-                btn.classList.replace('bg-youthPrimary', 'bg-green-500');
+                // Estado Visual: Activo
+                btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Programado`;
+                btn.classList.remove('bg-youthPrimary');
+                btn.classList.add('bg-green-500', 'pointer-events-none');
+                cancelBtn.classList.remove('hidden');
                 lucide.createIcons();
 
-                // Calcular próximo Jueves a las 9:00 PM
+                // Limpiar timeouts previos por si acaso
+                cancelNotifications(false); 
+
+                // Calcular próximo Jueves a las 9:00 PM (Hora local)
                 const now = new Date();
                 let eventTime = new Date();
+                // 4 es Jueves en getDay()
                 eventTime.setDate(now.getDate() + (4 + 7 - now.getDay()) % 7);
                 eventTime.setHours(21, 0, 0, 0);
 
-                // Si ya pasó hoy jueves, programar para el próximo
+                // Si hoy es jueves y ya pasó la hora, programar para el próximo jueves
                 if (eventTime <= now) {
                     eventTime.setDate(eventTime.getDate() + 7);
                 }
 
                 const timesToNotify = [
-                    { time: 30, msg: "¡Faltan 30 minutos! Te esperamos en la Reunión de Juveniles." },
-                    { time: 15, msg: "¡Solo 15 minutos! Prepara tu corazón para la reunión." },
-                    { time: 0, msg: "¡YA EMPEZAMOS! Conéctate o llega al auditorio ahora mismo." }
+                    { time: 30, msg: "¡Faltan 30 minutos! Te esperamos en la Reunión Online de Juveniles." },
+                    { time: 15, msg: "¡Solo 15 minutos! Prepara tu conexión para la reunión." },
+                    { time: 0, msg: "¡ESTAMOS EN VIVO! Entra a la reunión de jueves ahora mismo." }
                 ];
 
                 timesToNotify.forEach(notif => {
@@ -260,19 +275,41 @@
                     const delay = scheduledDate.getTime() - now.getTime();
 
                     if (delay > 0) {
-                        setTimeout(() => {
-                            new Notification("MJS | Recordatorio", {
+                        const timeoutId = setTimeout(() => {
+                            new Notification("MJS | Recordatorio de Jueves", {
                                 body: notif.msg,
                                 icon: "https://cdn-icons-png.flaticon.com/512/3652/3652191.png"
                             });
                         }, delay);
+                        activeTimeouts.push(timeoutId);
                     }
                 });
 
-                alert("¡Notificaciones activadas! Te avisaremos 30 min antes, 15 min antes y al momento de empezar.");
+                console.log(`Notificaciones programadas para el ${eventTime.toLocaleString()}`);
             } else {
-                alert("Para recibir avisos, debes permitir las notificaciones en la configuración de tu navegador.");
+                // Si no se permite (denied o default), revertimos el botón a su estado original
+                resetReminderButton();
+                if(permission === "denied") {
+                    alert("Has bloqueado las notificaciones. Para recibir avisos, cámbialo en la configuración de tu navegador.");
+                }
             }
+        }
+
+        function cancelNotifications(showAlert = true) {
+            activeTimeouts.forEach(id => clearTimeout(id));
+            activeTimeouts = [];
+            resetReminderButton();
+            if(showAlert) alert("Recordatorios desactivados.");
+        }
+
+        function resetReminderButton() {
+            const btn = document.getElementById('reminder-btn');
+            const cancelBtn = document.getElementById('cancel-reminder-btn');
+            btn.innerHTML = `<i data-lucide="bell" class="w-4 h-4"></i> Recuérdame`;
+            btn.classList.add('bg-youthPrimary');
+            btn.classList.remove('bg-green-500', 'pointer-events-none');
+            cancelBtn.classList.add('hidden');
+            lucide.createIcons();
         }
 
         const modalOverlay = document.getElementById('modal-overlay');
@@ -370,6 +407,11 @@
         window.onload = () => {
             fetchVerse();
             renderLessons();
+            // Verificar permiso al cargar
+            if(Notification.permission === "granted") {
+                // Podríamos auto-programar aquí si quisiéramos persistencia, 
+                // pero por ahora dejamos que el usuario interactúe.
+            }
         };
 
         modalOverlay.addEventListener('click', (e) => {
