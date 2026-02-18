@@ -105,7 +105,7 @@
             <!-- Versículo del Día -->
             <div class="bg-white dark:bg-gray-800 p-6 sm:p-10 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 max-w-3xl mx-auto mx-2">
                 <div class="flex items-center justify-center gap-2 text-youthSecondary mb-4">
-                    <i data-lucide="book-open" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                    <i data-lucide="book-open" class="w-4 h-4 sm:w-5 h-5"></i>
                     <span class="font-bold uppercase tracking-widest text-xs sm:text-sm">Versículo del Día</span>
                 </div>
                 <div id="verse-container" class="min-h-[80px] flex flex-col justify-center">
@@ -230,6 +230,27 @@
 
         lucide.createIcons();
 
+        // Función para actualizar la interfaz según el permiso de notificaciones
+        function checkNotificationStatus() {
+            if (!("Notification" in window)) return;
+            
+            if (Notification.permission === "granted") {
+                setUIAsProgrammed();
+            } else {
+                resetReminderButton();
+            }
+        }
+
+        function setUIAsProgrammed() {
+            const btn = document.getElementById('reminder-btn');
+            const cancelBtn = document.getElementById('cancel-reminder-btn');
+            btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Programado`;
+            btn.classList.remove('bg-youthPrimary');
+            btn.classList.add('bg-green-500', 'pointer-events-none');
+            cancelBtn.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
         // LÓGICA DE NOTIFICACIONES PROGRAMADAS
         async function scheduleNotifications() {
             if (!("Notification" in window)) {
@@ -238,28 +259,16 @@
             }
 
             const permission = await Notification.requestPermission();
-            const btn = document.getElementById('reminder-btn');
-            const cancelBtn = document.getElementById('cancel-reminder-btn');
             
             if (permission === "granted") {
-                // Estado Visual: Activo
-                btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Programado`;
-                btn.classList.remove('bg-youthPrimary');
-                btn.classList.add('bg-green-500', 'pointer-events-none');
-                cancelBtn.classList.remove('hidden');
-                lucide.createIcons();
-
-                // Limpiar timeouts previos por si acaso
+                setUIAsProgrammed();
                 cancelNotifications(false); 
 
-                // Calcular próximo Jueves a las 9:00 PM (Hora local)
                 const now = new Date();
                 let eventTime = new Date();
-                // 4 es Jueves en getDay()
                 eventTime.setDate(now.getDate() + (4 + 7 - now.getDay()) % 7);
                 eventTime.setHours(21, 0, 0, 0);
 
-                // Si hoy es jueves y ya pasó la hora, programar para el próximo jueves
                 if (eventTime <= now) {
                     eventTime.setDate(eventTime.getDate() + 7);
                 }
@@ -284,10 +293,7 @@
                         activeTimeouts.push(timeoutId);
                     }
                 });
-
-                console.log(`Notificaciones programadas para el ${eventTime.toLocaleString()}`);
             } else {
-                // Si no se permite (denied o default), revertimos el botón a su estado original
                 resetReminderButton();
                 if(permission === "denied") {
                     alert("Has bloqueado las notificaciones. Para recibir avisos, cámbialo en la configuración de tu navegador.");
@@ -305,11 +311,13 @@
         function resetReminderButton() {
             const btn = document.getElementById('reminder-btn');
             const cancelBtn = document.getElementById('cancel-reminder-btn');
-            btn.innerHTML = `<i data-lucide="bell" class="w-4 h-4"></i> Recuérdame`;
-            btn.classList.add('bg-youthPrimary');
-            btn.classList.remove('bg-green-500', 'pointer-events-none');
-            cancelBtn.classList.add('hidden');
-            lucide.createIcons();
+            if (btn && cancelBtn) {
+                btn.innerHTML = `<i data-lucide="bell" class="w-4 h-4"></i> Recuérdame`;
+                btn.classList.add('bg-youthPrimary');
+                btn.classList.remove('bg-green-500', 'pointer-events-none');
+                cancelBtn.classList.add('hidden');
+                lucide.createIcons();
+            }
         }
 
         const modalOverlay = document.getElementById('modal-overlay');
@@ -407,11 +415,8 @@
         window.onload = () => {
             fetchVerse();
             renderLessons();
-            // Verificar permiso al cargar
-            if(Notification.permission === "granted") {
-                // Podríamos auto-programar aquí si quisiéramos persistencia, 
-                // pero por ahora dejamos que el usuario interactúe.
-            }
+            // Verificación cada vez que refresca la página
+            checkNotificationStatus();
         };
 
         modalOverlay.addEventListener('click', (e) => {
