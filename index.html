@@ -121,7 +121,7 @@
             <div class="mt-16 text-center">
                 <button id="test-notif-btn" onclick="triggerDelayedNotification()" class="group relative inline-flex items-center gap-2 text-gray-400 hover:text-youthPrimary transition text-xs font-bold uppercase tracking-widest border border-dashed border-gray-300 dark:border-gray-700 px-6 py-3 rounded-full overflow-hidden">
                     <span id="test-btn-content" class="flex items-center gap-2">
-                        <i data-lucide="terminal" class="w-3 h-3"></i> Notificación de Prueba (30s)
+                        <i data-lucide="terminal" class="w-3 h-3"></i> Notificación de Prueba (10s)
                     </span>
                     <div id="test-progress-bar" class="absolute bottom-0 left-0 h-1 bg-youthPrimary w-0 transition-all duration-[30000ms] ease-linear"></div>
                 </button>
@@ -178,7 +178,7 @@
                     scheduleNotifications(eventId);
                     
                     new Notification("¡Recordatorio Activado!", { 
-                        body: "Te avisaremos 30 minutos antes de la reunión.",
+                        body: "Te avisaremos 15, 10, y 5 minutos antes de la reunión.",
                         icon: "https://cdn-icons-png.flaticon.com/512/3652/3652191.png"
                     });
                 } else {
@@ -276,17 +276,17 @@
             progress.style.width = '100%';
 
             let seconds = 10;
-            const msgs = ["Preparando...", "Ya casi...", "Enviando!"];
+            const msgs = ["Preparando...", "Enviando!"];
 
             const timer = setInterval(() => {
                 seconds--;
-                content.innerHTML = `<span class="animate-pulse-soft flex items-center gap-2 italic"><i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i> ${msgs[Math.floor(seconds/6)] || 'Listo'} (${seconds}s)</span>`;
+                content.innerHTML = `<span class="animate-pulse-soft flex items-center gap-2 italic"><i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i> ${msgs[Math.floor(seconds/8)] || 'Listo'} (${seconds}s)</span>`;
                 lucide.createIcons();
 
                 if (seconds <= 0) {
                     clearInterval(timer);
                     new Notification("Prueba de MJS", { 
-                        body: "¡Funciona! Así recibirás los avisos en tu móvil.",
+                        body: "¡Funciona! Así recibirás los avisos en tu móvil o pc.",
                         icon: "https://cdn-icons-png.flaticon.com/512/3652/3652191.png"
                     });
                     resetTestBtn();
