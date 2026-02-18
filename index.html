@@ -19,24 +19,18 @@
             overflow-x: hidden;
             width: 100%;
         }
-        /* Animaciones fluidas */
         .transition-all-custom {
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        
         #test-progress-bar {
             transition: width 0.3s linear, opacity 0.5s ease;
         }
-
         .lesson-card:hover { transform: translateY(-5px); }
-        
         @keyframes pulse-soft {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.6; }
         }
         .animate-pulse-soft { animation: pulse-soft 2s infinite; }
-        
-        /* Evitar saltos en el layout al cambiar iconos */
         .icon-container {
             display: inline-flex;
             align-items: center;
@@ -158,14 +152,14 @@
     </footer>
 
     <script>
-        // Registro de Service Worker (Simulado para entorno local/PWA)
+        // Registro de Service Worker
         async function registerPushServiceWorker() {
             if ('serviceWorker' in navigator) {
                 try {
                     await navigator.serviceWorker.register('./sw.js').catch(() => {
                         console.log("Modo PWA: Funcionando en primer plano.");
                     });
-                } catch (err) { /* Ignorar errores de registro en sandbox */ }
+                } catch (err) { }
             }
         }
 
@@ -177,7 +171,7 @@
 
         let activeTimeouts = { jueves: [] };
         let testStartTime = null;
-        let testDuration = 10000; // 10 segundos
+        let testDuration = 10000;
         let testInterval = null;
 
         function getReminderState(eventId) {
@@ -196,7 +190,7 @@
                     setReminderState(eventId, true);
                     updateButtonUI(eventId, true);
                     scheduleNotifications(eventId);
-                    showPushNotification("¡Recordatorio Activado!", "Recibirás avisos antes de la reunión.");
+                    showPushNotification("¡Recordatorio Activado!", "Recibirás avisos antes de la reunión de los jueves.");
                 } else {
                     alert("Por favor, permite las notificaciones para avisarte.");
                 }
@@ -229,21 +223,36 @@
             cancelScheduledNotifications(eventId);
             const now = new Date();
             let eventTime = new Date();
+            
             if (eventId === 'jueves') {
-                const dayOfWeek = 4;
-                const distance = (dayOfWeek + 7 - now.getDay()) % 7;
-                eventTime.setDate(now.getDate() + distance);
-                eventTime.setHours(21, 0, 0, 0);
-                if (eventTime <= now) eventTime.setDate(eventTime.getDate() + 7);
+                const targetDay = 4; // Jueves
+                const currentDay = now.getDay();
+                let daysUntil = (targetDay - currentDay + 7) % 7;
+                
+                eventTime.setDate(now.getDate() + daysUntil);
+                eventTime.setHours(21, 0, 0, 0); // 9:00 PM
+                
+                // Si el evento ya pasó hoy, programar para la próxima semana
+                if (eventTime.getTime() <= now.getTime()) {
+                    eventTime.setDate(eventTime.getDate() + 7);
+                }
             }
+
             const alerts = [
-                { offset: 15, msg: "¡Faltan 15 minutos! Conéctate." },
-                { offset: 0, msg: "¡ESTAMOS EN VIVO!" }
+                { offset: 15, msg: "¡Faltan 15 minutos! Conéctate a la reunión." },
+                { offset: 10, msg: "¡Solo 10 minutos! La reunión está por empezar." },
+                { offset: 5, msg: "¡Solo 5 minutos! La reunión está por empezar." },
+                { offset: 0, msg: "¡ESTAMOS EN VIVO! Entra ahora." }
             ];
+
             alerts.forEach(alertData => {
                 const triggerTime = new Date(eventTime.getTime() - alertData.offset * 60000);
                 const delay = triggerTime.getTime() - now.getTime();
-                if (delay > 0) {
+                
+                // Si el tiempo de notificación ya pasó pero el evento no ha ocurrido, avisar de inmediato si es < 2 min de retraso
+                if (delay <= 0 && delay > -120000) {
+                     showPushNotification("MJS | Recordatorio", alertData.msg);
+                } else if (delay > 0) {
                     const tid = setTimeout(() => {
                         if (getReminderState(eventId)) showPushNotification("MJS | Recordatorio", alertData.msg);
                     }, delay);
@@ -263,7 +272,8 @@
             const options = {
                 body: body,
                 icon: "https://cdn-icons-png.flaticon.com/512/3652/3652191.png",
-                vibrate: [200, 100, 200]
+                vibrate: [200, 100, 200],
+                requireInteraction: true
             };
             if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
                 navigator.serviceWorker.ready.then(reg => reg.showNotification(title, options));
@@ -272,7 +282,6 @@
             }
         }
 
-        // --- SOLUCIÓN AL GLITCH DE MINIMIZACIÓN ---
         async function triggerDelayedNotification() {
             if (testInterval) return;
             const permission = await Notification.requestPermission();
@@ -293,9 +302,7 @@
                 const remaining = Math.max(0, Math.ceil((testDuration - elapsed) / 1000));
                 const percent = Math.min(100, (elapsed / testDuration) * 100);
 
-                // Actualizar barra y texto basándose en tiempo real transcurrido
                 progress.style.width = `${percent}%`;
-                
                 const msgIndex = Math.floor((percent / 100) * msgs.length);
                 content.innerHTML = `<i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i> ${msgs[msgIndex] || 'Enviando...'} (${remaining}s)`;
                 lucide.createIcons();
@@ -306,14 +313,13 @@
                     showPushNotification("Prueba Exitosa", "Notificación recibida correctamente.");
                     resetTestBtn();
                 }
-            }, 100); // Frecuencia alta para suavidad
+            }, 100);
         }
 
         function resetTestBtn() {
             const content = document.getElementById('test-btn-content');
             const progress = document.getElementById('test-progress-bar');
             const btn = document.getElementById('test-notif-btn');
-            
             progress.style.opacity = '0';
             setTimeout(() => {
                 progress.style.width = '0';
@@ -353,7 +359,12 @@
             lucide.createIcons();
             registerPushServiceWorker();
             const events = ['jueves'];
-            events.forEach(ev => { if (getReminderState(ev)) { updateButtonUI(ev, true); scheduleNotifications(ev); } });
+            events.forEach(ev => { 
+                if (getReminderState(ev)) { 
+                    updateButtonUI(ev, true); 
+                    scheduleNotifications(ev); 
+                } 
+            });
             if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
         };
 
