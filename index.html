@@ -25,8 +25,7 @@
         }
         
         #test-progress-bar {
-            transition-property: width;
-            transition-timing-function: linear;
+            transition: width 0.3s linear, opacity 0.5s ease;
         }
 
         .lesson-card:hover { transform: translateY(-5px); }
@@ -159,19 +158,14 @@
     </footer>
 
     <script>
-        // --- SISTEMA DE SERVICE WORKER PARA NOTIFICACIONES PUSH ---
-        // Generamos el archivo del SW dinámicamente de forma compatible con el entorno
+        // Registro de Service Worker (Simulado para entorno local/PWA)
         async function registerPushServiceWorker() {
             if ('serviceWorker' in navigator) {
                 try {
-                    // Nota: En un entorno real, este archivo sw.js debe existir físicamente en el servidor.
-                    // Para esta demo, simulamos la capacidad de fondo.
-                    const registration = await navigator.serviceWorker.register('./sw.js').catch(() => {
-                        console.log("Service Worker requiere un archivo físico 'sw.js' para funcionar con el navegador cerrado.");
+                    await navigator.serviceWorker.register('./sw.js').catch(() => {
+                        console.log("Modo PWA: Funcionando en primer plano.");
                     });
-                } catch (err) {
-                    console.warn("SW no registrado:", err);
-                }
+                } catch (err) { /* Ignorar errores de registro en sandbox */ }
             }
         }
 
@@ -182,7 +176,9 @@
         ];
 
         let activeTimeouts = { jueves: [] };
-        let isTesting = false;
+        let testStartTime = null;
+        let testDuration = 10000; // 10 segundos
+        let testInterval = null;
 
         function getReminderState(eventId) {
             return localStorage.getItem(`reminder_${eventId}`) === 'true';
@@ -194,22 +190,15 @@
 
         async function toggleEventReminder(eventId) {
             const currentState = getReminderState(eventId);
-            
             if (!currentState) {
-                if (!("Notification" in window)) {
-                    alert("Tu navegador no soporta notificaciones.");
-                    return;
-                }
-
                 const permission = await Notification.requestPermission();
                 if (permission === "granted") {
                     setReminderState(eventId, true);
                     updateButtonUI(eventId, true);
                     scheduleNotifications(eventId);
-                    
-                    showPushNotification("¡Recordatorio Activado!", "Te avisaremos 15, 10 y 5 minutos antes de empezar.");
+                    showPushNotification("¡Recordatorio Activado!", "Recibirás avisos antes de la reunión.");
                 } else {
-                    alert("Por favor, habilita las notificaciones en la configuración de tu navegador para recibir los avisos.");
+                    alert("Por favor, permite las notificaciones para avisarte.");
                 }
             } else {
                 setReminderState(eventId, false);
@@ -222,7 +211,6 @@
             const btn = document.getElementById(`btn-${eventId}`);
             const cancel = document.getElementById(`cancel-${eventId}`);
             if (!btn) return;
-            
             if (isActive) {
                 btn.innerHTML = `<span class="icon-container"><i data-lucide="check" class="w-4 h-4"></i></span> Programado`;
                 btn.classList.replace('bg-youthPrimary', 'bg-green-500');
@@ -239,34 +227,25 @@
 
         function scheduleNotifications(eventId) {
             cancelScheduledNotifications(eventId);
-            
             const now = new Date();
             let eventTime = new Date();
-            
             if (eventId === 'jueves') {
-                const dayOfWeek = 4; // Jueves
+                const dayOfWeek = 4;
                 const distance = (dayOfWeek + 7 - now.getDay()) % 7;
                 eventTime.setDate(now.getDate() + distance);
                 eventTime.setHours(21, 0, 0, 0);
                 if (eventTime <= now) eventTime.setDate(eventTime.getDate() + 7);
             }
-
             const alerts = [
-                { offset: 15, msg: "¡Faltan 15 minutos! La reunión de jóvenes está por iniciar." },
-                { offset: 10, msg: "¡Solo 10 minutos! Ve buscando tu lugar." },
-                { offset: 5, msg: "¡5 minutos! Conéctate ahora para no perderte nada." },
-                { offset: 0, msg: "¡ESTAMOS EN VIVO! Entra ya a la reunión." }
+                { offset: 15, msg: "¡Faltan 15 minutos! Conéctate." },
+                { offset: 0, msg: "¡ESTAMOS EN VIVO!" }
             ];
-
             alerts.forEach(alertData => {
                 const triggerTime = new Date(eventTime.getTime() - alertData.offset * 60000);
                 const delay = triggerTime.getTime() - now.getTime();
-
                 if (delay > 0) {
                     const tid = setTimeout(() => {
-                        if (getReminderState(eventId)) {
-                            showPushNotification("MJS | Recordatorio", alertData.msg);
-                        }
+                        if (getReminderState(eventId)) showPushNotification("MJS | Recordatorio", alertData.msg);
                     }, delay);
                     activeTimeouts[eventId].push(tid);
                 }
@@ -280,76 +259,69 @@
             }
         }
 
-        // Función centralizada para notificaciones (maneja fondo y primer plano)
         function showPushNotification(title, body) {
             const options = {
                 body: body,
                 icon: "https://cdn-icons-png.flaticon.com/512/3652/3652191.png",
-                badge: "https://cdn-icons-png.flaticon.com/512/3652/3652191.png",
-                vibrate: [200, 100, 200],
-                tag: 'mjs-notif'
+                vibrate: [200, 100, 200]
             };
-
             if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-                navigator.serviceWorker.ready.then(reg => {
-                    reg.showNotification(title, options);
-                });
+                navigator.serviceWorker.ready.then(reg => reg.showNotification(title, options));
             } else {
                 new Notification(title, options);
             }
         }
 
+        // --- SOLUCIÓN AL GLITCH DE MINIMIZACIÓN ---
         async function triggerDelayedNotification() {
-            if (isTesting) return;
+            if (testInterval) return;
             const permission = await Notification.requestPermission();
             if (permission !== "granted") return;
 
-            isTesting = true;
             const btn = document.getElementById('test-notif-btn');
             const content = document.getElementById('test-btn-content');
             const progress = document.getElementById('test-progress-bar');
             
-            progress.style.transition = 'none';
-            progress.style.width = '0%';
+            btn.classList.add('pointer-events-none', 'text-youthPrimary');
+            testStartTime = performance.now();
             
-            setTimeout(() => {
-                progress.style.transition = 'width 10s linear';
-                progress.style.width = '100%';
-            }, 50);
-
-            let seconds = 10;
             const msgs = ["Sincronizando...", "Preparando...", "Casi listo!"];
 
-            const timer = setInterval(() => {
-                seconds--;
-                const msgIndex = Math.floor((10 - seconds) / 3.5);
-                content.innerHTML = `<i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i> ${msgs[msgIndex] || 'Enviando...'} (${seconds}s)`;
+            testInterval = setInterval(() => {
+                const currentTime = performance.now();
+                const elapsed = currentTime - testStartTime;
+                const remaining = Math.max(0, Math.ceil((testDuration - elapsed) / 1000));
+                const percent = Math.min(100, (elapsed / testDuration) * 100);
+
+                // Actualizar barra y texto basándose en tiempo real transcurrido
+                progress.style.width = `${percent}%`;
+                
+                const msgIndex = Math.floor((percent / 100) * msgs.length);
+                content.innerHTML = `<i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i> ${msgs[msgIndex] || 'Enviando...'} (${remaining}s)`;
                 lucide.createIcons();
 
-                if (seconds <= 0) {
-                    clearInterval(timer);
-                    showPushNotification("Prueba Exitosa", "Esta es una notificación push de MJS Jóvenes.");
+                if (elapsed >= testDuration) {
+                    clearInterval(testInterval);
+                    testInterval = null;
+                    showPushNotification("Prueba Exitosa", "Notificación recibida correctamente.");
                     resetTestBtn();
                 }
-            }, 1000);
+            }, 100); // Frecuencia alta para suavidad
         }
 
         function resetTestBtn() {
-            isTesting = false;
             const content = document.getElementById('test-btn-content');
             const progress = document.getElementById('test-progress-bar');
+            const btn = document.getElementById('test-notif-btn');
             
-            progress.style.transition = 'opacity 0.5s ease';
             progress.style.opacity = '0';
-            
             setTimeout(() => {
-                progress.style.transition = 'none';
                 progress.style.width = '0';
                 progress.style.opacity = '1';
+                btn.classList.remove('pointer-events-none', 'text-youthPrimary');
+                content.innerHTML = `<i data-lucide="terminal" class="w-3 h-3"></i> Notificación de Prueba (10s)`;
+                lucide.createIcons();
             }, 500);
-
-            content.innerHTML = `<i data-lucide="terminal" class="w-3 h-3"></i> Notificación de Prueba (10s)`;
-            lucide.createIcons();
         }
 
         async function fetchVerse() {
@@ -370,11 +342,7 @@
             lessonsData.forEach(l => {
                 const div = document.createElement('div');
                 div.className = "bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-md border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all-custom cursor-default";
-                div.innerHTML = `
-                    <span class="text-[10px] font-black uppercase text-youthPrimary bg-youthPrimary/10 px-2 py-1 rounded-full">${l.category}</span>
-                    <h3 class="font-bold my-2 text-lg">${l.title}</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">${l.content}</p>
-                `;
+                div.innerHTML = `<span class="text-[10px] font-black uppercase text-youthPrimary bg-youthPrimary/10 px-2 py-1 rounded-full">${l.category}</span><h3 class="font-bold my-2 text-lg">${l.title}</h3><p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">${l.content}</p>`;
                 grid.appendChild(div);
             });
         }
@@ -384,18 +352,9 @@
             renderLessons();
             lucide.createIcons();
             registerPushServiceWorker();
-            
             const events = ['jueves'];
-            events.forEach(ev => {
-                if (getReminderState(ev)) {
-                    updateButtonUI(ev, true);
-                    scheduleNotifications(ev);
-                }
-            });
-
-            if (localStorage.getItem('theme') === 'dark') {
-                document.documentElement.classList.add('dark');
-            }
+            events.forEach(ev => { if (getReminderState(ev)) { updateButtonUI(ev, true); scheduleNotifications(ev); } });
+            if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
         };
 
         document.getElementById('theme-toggle').onclick = () => {
