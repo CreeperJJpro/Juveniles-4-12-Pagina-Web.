@@ -1,1 +1,380 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Ministerio de Jóvenes | Conectando Generaciones</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            transition: background-color 0.3s ease, color 0.3s ease;
+            overflow-x: hidden;
+            width: 100%;
+        }
+        .lesson-card:hover {
+            transform: translateY(-5px);
+        }
+        p, h1, h2, h3 {
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+        #modal-overlay {
+            transition: opacity 0.3s ease;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        youthPrimary: '#6366f1',
+                        youthSecondary: '#f43f5e',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 min-h-screen font-sans antialiased">
 
+    <!-- Modal de Lecciones -->
+    <div id="modal-overlay" class="hidden fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-lg rounded-3xl p-8 shadow-2xl relative">
+            <button onclick="closeModal()" class="absolute top-4 right-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <div id="modal-content">
+                <!-- Contenido dinámico -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Navegación -->
+    <nav class="fixed w-full z-50 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <div class="bg-youthPrimary p-2 rounded-lg">
+                        <i data-lucide="zap" class="text-white w-5 h-5 sm:w-6 sm:h-6"></i>
+                    </div>
+                    <span class="text-lg sm:text-xl font-bold tracking-tighter uppercase italic truncate">MJS | Jóvenes</span>
+                </div>
+                
+                <div class="hidden md:flex space-x-6 lg:space-x-8 font-medium">
+                    <a href="#inicio" class="hover:text-youthPrimary transition">Inicio</a>
+                    <a href="#lecciones" class="hover:text-youthPrimary transition">Lecciones</a>
+                    <a href="#eventos" class="hover:text-youthPrimary transition">Eventos</a>
+                    <a href="#recursos" class="hover:text-youthPrimary transition">Recursos</a>
+                </div>
+
+                <div class="flex items-center gap-2 sm:gap-4">
+                    <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition" aria-label="Cambiar tema">
+                        <i id="theme-icon" data-lucide="moon" class="w-5 h-5"></i>
+                    </button>
+                    <button class="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" onclick="toggleMobileMenu()" aria-label="Abrir menú">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-4 space-y-2">
+            <a href="#inicio" onclick="toggleMobileMenu()" class="block py-2 font-medium">Inicio</a>
+            <a href="#lecciones" onclick="toggleMobileMenu()" class="block py-2 font-medium">Lecciones</a>
+            <a href="#eventos" onclick="toggleMobileMenu()" class="block py-2 font-medium">Eventos</a>
+            <a href="#recursos" onclick="toggleMobileMenu()" class="block py-2 font-medium">Recursos</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header id="inicio" class="pt-28 pb-12 px-4 sm:pt-36 sm:pb-20">
+        <div class="max-w-5xl mx-auto text-center">
+            <h1 class="text-4xl sm:text-5xl md:text-7xl font-black mb-6 uppercase leading-tight tracking-tighter">
+                Más que una religión,<br><span class="text-youthPrimary">una relación.</span>
+            </h1>
+            <p class="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10 px-2">
+                Descubre tu propósito, encuentra comunidad y crece en tu fe de manera real.
+            </p>
+            
+            <!-- Versículo del Día -->
+            <div class="bg-white dark:bg-gray-800 p-6 sm:p-10 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 max-w-3xl mx-auto mx-2">
+                <div class="flex items-center justify-center gap-2 text-youthSecondary mb-4">
+                    <i data-lucide="book-open" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                    <span class="font-bold uppercase tracking-widest text-xs sm:text-sm">Versículo del Día</span>
+                </div>
+                <div id="verse-container" class="min-h-[80px] flex flex-col justify-center">
+                    <p id="verse-text" class="text-lg sm:text-2xl font-medium italic mb-4 leading-relaxed">"Cargando palabra de vida..."</p>
+                    <p id="verse-ref" class="font-bold text-youthPrimary text-sm sm:text-base">--:--</p>
+                </div>
+                <button onclick="fetchVerse()" class="mt-4 text-xs font-bold text-gray-400 hover:text-youthPrimary flex items-center gap-1 mx-auto transition">
+                    <i data-lucide="refresh-cw" class="w-3 h-3"></i> Actualizar
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Lecciones -->
+    <section id="lecciones" class="py-16 bg-gray-100 dark:bg-gray-800/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6">
+            <div class="flex flex-col lg:flex-row lg:items-end justify-between mb-10 gap-6">
+                <div class="max-w-xl">
+                    <h2 class="text-3xl sm:text-4xl font-bold mb-2">Enseñanzas</h2>
+                    <p class="text-gray-500 text-sm sm:text-base">Explora mensajes recientes y profundiza en la Palabra.</p>
+                </div>
+                <div class="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
+                    <button onclick="filterLessons('Todas')" class="filter-btn active whitespace-nowrap bg-youthPrimary text-white px-5 py-2 rounded-full text-xs sm:text-sm font-bold shadow-lg shadow-youthPrimary/20">Todas</button>
+                    <button onclick="filterLessons('Fe')" class="filter-btn whitespace-nowrap bg-white dark:bg-gray-700 px-5 py-2 rounded-full text-xs sm:text-sm font-bold">Fe</button>
+                    <button onclick="filterLessons('Vida')" class="filter-btn whitespace-nowrap bg-white dark:bg-gray-700 px-5 py-2 rounded-full text-xs sm:text-sm font-bold">Vida</button>
+                    <button onclick="filterLessons('Relaciones')" class="filter-btn whitespace-nowrap bg-white dark:bg-gray-700 px-5 py-2 rounded-full text-xs sm:text-sm font-bold">Relaciones</button>
+                </div>
+            </div>
+            <div id="lessons-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"></div>
+        </div>
+    </section>
+
+    <!-- Eventos -->
+    <section id="eventos" class="py-16">
+        <div class="max-w-4xl mx-auto px-4">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-3">Nuestra Reunión</h2>
+                <p class="text-gray-500 italic text-sm">El momento más importante de la semana para crecer juntos.</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 p-6 sm:p-8 bg-white dark:bg-gray-800 rounded-3xl border-l-8 border-youthPrimary shadow-lg hover:shadow-xl transition-shadow">
+                    <div class="text-center bg-youthPrimary/10 p-4 rounded-2xl min-w-[100px]">
+                        <span class="block text-sm font-black text-youthPrimary uppercase tracking-tighter leading-none">Todos los</span>
+                        <span class="block text-3xl font-black text-youthPrimary uppercase tracking-tighter">Jueves</span>
+                    </div>
+                    <div class="flex-grow text-center sm:text-left">
+                        <h3 class="text-xl sm:text-2xl font-black leading-tight uppercase italic">Reunión de Juveniles</h3>
+                        <div class="flex flex-wrap justify-center sm:justify-start gap-4 mt-2">
+                            <span class="flex items-center gap-1 text-sm font-bold text-gray-500 dark:text-gray-400">
+                                <i data-lucide="clock" class="w-4 h-4"></i> 9:00 PM
+                            </span>
+                            <span class="flex items-center gap-1 text-sm font-bold text-gray-500 dark:text-gray-400">
+                                <i data-lucide="map-pin" class="w-4 h-4"></i> Auditorio Principal
+                            </span>
+                        </div>
+                    </div>
+                    <button id="reminder-btn" onclick="scheduleNotifications()" class="w-full sm:w-auto bg-youthPrimary text-white px-6 py-3 rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-105 transition flex items-center justify-center gap-2">
+                        <i data-lucide="bell" class="w-4 h-4"></i> Recuérdame
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recursos -->
+    <section id="recursos" class="py-16 bg-youthPrimary text-white">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <h2 class="text-3xl font-bold mb-10">Recursos Gratuitos</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="p-6 sm:p-8 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20">
+                    <i data-lucide="music" class="w-10 h-10 mx-auto mb-4"></i>
+                    <h3 class="text-lg font-bold mb-2 uppercase tracking-tight">Worship Playlist</h3>
+                    <p class="text-sm text-white/80 mb-6">Música para tus tiempos a solas con Dios.</p>
+                    <button onclick="handleExternalLink('Spotify')" class="inline-block bg-white text-youthPrimary px-6 py-2 rounded-full font-bold text-sm hover:scale-105 transition">Escuchar Ahora</button>
+                </div>
+                <div class="p-6 sm:p-8 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20">
+                    <i data-lucide="file-text" class="w-10 h-10 mx-auto mb-4"></i>
+                    <h3 class="text-lg font-bold mb-2 uppercase tracking-tight">Guías de Estudio</h3>
+                    <p class="text-sm text-white/80 mb-6">PDFs para profundizar en grupos pequeños.</p>
+                    <button onclick="handleExternalLink('Descarga')" class="inline-block bg-white text-youthPrimary px-6 py-2 rounded-full font-bold text-sm hover:scale-105 transition">Ver Guías</button>
+                </div>
+                <div class="p-6 sm:p-8 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20">
+                    <i data-lucide="message-circle" class="w-10 h-10 mx-auto mb-4"></i>
+                    <h3 class="text-lg font-bold mb-2 uppercase tracking-tight">Peticiones</h3>
+                    <p class="text-sm text-white/80 mb-6">Estamos aquí para orar por ti.</p>
+                    <button onclick="handleExternalLink('Oración')" class="inline-block bg-white text-youthPrimary px-6 py-2 rounded-full font-bold text-sm hover:scale-105 transition">Enviar Oración</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="py-10 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 px-4">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="text-center md:text-left">
+                <span class="text-xl font-black italic uppercase">MJS | Jóvenes</span>
+                <p class="text-gray-400 text-[10px] mt-1 uppercase tracking-widest font-bold">Hecho para Su gloria.</p>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="handleExternalLink('Instagram')" class="p-2 bg-gray-50 dark:bg-gray-800 rounded-full hover:text-youthPrimary transition"><i data-lucide="instagram" class="w-5 h-5"></i></button>
+                <button onclick="handleExternalLink('YouTube')" class="p-2 bg-gray-50 dark:bg-gray-800 rounded-full hover:text-youthPrimary transition"><i data-lucide="youtube" class="w-5 h-5"></i></button>
+                <button onclick="handleExternalLink('Mensaje')" class="p-2 bg-gray-50 dark:bg-gray-800 rounded-full hover:text-youthPrimary transition"><i data-lucide="message-square" class="w-5 h-5"></i></button>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const lessonsData = [
+            { id: 1, title: "Identidad Digital", date: "15 Feb, 2024", category: "Vida", content: "¿Quién eres cuando nadie te está dando 'like'? Descubre tu valor real en Cristo. En este mundo de filtros, Dios te ama al natural." },
+            { id: 2, title: "Dudas y Fe", date: "08 Feb, 2024", category: "Fe", content: "Está bien tener preguntas. Veamos cómo Jesús respondió a Tomás con amor. Las dudas no matan la fe, la hacen buscar respuestas más profundas." },
+            { id: 3, title: "Amor y Respeto", date: "01 Feb, 2024", category: "Relaciones", content: "Cómo amar de verdad protegiendo tu corazón y el de la otra persona en el noviazgo. El amor real sabe esperar y sabe cuidar." },
+            { id: 4, title: "Libertad Real", date: "25 Ene, 2024", category: "Vida", content: "Soltar la carga del rencor para vivir en libertad absoluta mediante el perdón. Perdonar no es olvidar, es decidir que el pasado no controle tu presente." },
+            { id: 5, title: "Biblia 101", date: "18 Ene, 2024", category: "Fe", content: "Herramientas prácticas para que tu tiempo con Dios sea dinámico y profundo. No es solo leer, es conectar con el autor de la vida." }
+        ];
+
+        lucide.createIcons();
+
+        // LÓGICA DE NOTIFICACIONES PROGRAMADAS
+        async function scheduleNotifications() {
+            if (!("Notification" in window)) {
+                alert("Este navegador no soporta notificaciones de escritorio.");
+                return;
+            }
+
+            const permission = await Notification.requestPermission();
+            
+            if (permission === "granted") {
+                const btn = document.getElementById('reminder-btn');
+                btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> ¡Programado!`;
+                btn.classList.replace('bg-youthPrimary', 'bg-green-500');
+                lucide.createIcons();
+
+                // Calcular próximo Jueves a las 9:00 PM
+                const now = new Date();
+                let eventTime = new Date();
+                eventTime.setDate(now.getDate() + (4 + 7 - now.getDay()) % 7);
+                eventTime.setHours(21, 0, 0, 0);
+
+                // Si ya pasó hoy jueves, programar para el próximo
+                if (eventTime <= now) {
+                    eventTime.setDate(eventTime.getDate() + 7);
+                }
+
+                const timesToNotify = [
+                    { time: 30, msg: "¡Faltan 30 minutos! Te esperamos en la Reunión de Juveniles." },
+                    { time: 15, msg: "¡Solo 15 minutos! Prepara tu corazón para la reunión." },
+                    { time: 0, msg: "¡YA EMPEZAMOS! Conéctate o llega al auditorio ahora mismo." }
+                ];
+
+                timesToNotify.forEach(notif => {
+                    const scheduledDate = new Date(eventTime.getTime() - notif.time * 60000);
+                    const delay = scheduledDate.getTime() - now.getTime();
+
+                    if (delay > 0) {
+                        setTimeout(() => {
+                            new Notification("MJS | Recordatorio", {
+                                body: notif.msg,
+                                icon: "https://cdn-icons-png.flaticon.com/512/3652/3652191.png"
+                            });
+                        }, delay);
+                    }
+                });
+
+                alert("¡Notificaciones activadas! Te avisaremos 30 min antes, 15 min antes y al momento de empezar.");
+            } else {
+                alert("Para recibir avisos, debes permitir las notificaciones en la configuración de tu navegador.");
+            }
+        }
+
+        const modalOverlay = document.getElementById('modal-overlay');
+        const modalContent = document.getElementById('modal-content');
+
+        function showLessonModal(id) {
+            const lesson = lessonsData.find(l => l.id === id);
+            if (!lesson) return;
+            modalContent.innerHTML = `
+                <span class="bg-youthPrimary/10 text-youthPrimary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider mb-4 inline-block">${lesson.category}</span>
+                <h2 class="text-3xl font-black mb-4 leading-tight">${lesson.title}</h2>
+                <p class="text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">${lesson.content}</p>
+                <div class="text-xs text-gray-400 font-bold">Publicado el ${lesson.date}</div>
+            `;
+            modalOverlay.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; 
+        }
+
+        function closeModal() {
+            modalOverlay.classList.add('hidden');
+            document.body.style.overflow = ''; 
+        }
+
+        function handleExternalLink(type) {
+            alert(`Pronto te redirigiremos a nuestro espacio de ${type}. ¡Mantente conectado!`);
+        }
+
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const html = document.documentElement;
+
+        const updateThemeIcon = (isDark) => {
+            themeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+            lucide.createIcons();
+        };
+
+        themeToggle.addEventListener('click', () => {
+            const isDark = html.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeIcon(isDark);
+        });
+
+        async function fetchVerse() {
+            const vText = document.getElementById('verse-text');
+            const vRef = document.getElementById('verse-ref');
+            try {
+                const res = await fetch('https://bible-api.com/john+3:16?translation=rva');
+                const data = await res.json();
+                vText.innerText = `"${data.text.trim()}"`;
+                vRef.innerText = data.reference;
+            } catch (e) {
+                vText.innerText = '"Porque yo sé los pensamientos que tengo acerca de vosotros, dice Jehová, pensamientos de paz, y no de mal."';
+                vRef.innerText = "Jeremías 29:11";
+            }
+        }
+
+        function renderLessons(filter = 'Todas') {
+            const grid = document.getElementById('lessons-grid');
+            grid.innerHTML = '';
+            const filtered = filter === 'Todas' ? lessonsData : lessonsData.filter(l => l.category === filter);
+            filtered.forEach(lesson => {
+                const card = document.createElement('div');
+                card.className = "lesson-card bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700 transition duration-300 flex flex-col";
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="bg-youthPrimary/10 text-youthPrimary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">${lesson.category}</span>
+                        <span class="text-[10px] text-gray-400 font-bold uppercase">${lesson.date}</span>
+                    </div>
+                    <h3 class="text-lg font-bold mb-3 leading-tight">${lesson.title}</h3>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm mb-6 flex-grow line-clamp-3">${lesson.content}</p>
+                    <button onclick="showLessonModal(${lesson.id})" class="flex items-center gap-2 text-youthPrimary font-black text-xs uppercase hover:tracking-widest transition-all">
+                        Ver más <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                `;
+                grid.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function filterLessons(cat) {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-youthPrimary', 'text-white', 'shadow-lg', 'shadow-youthPrimary/20');
+                btn.classList.add('bg-white', 'dark:bg-gray-700');
+                if(btn.innerText === cat) {
+                    btn.classList.add('bg-youthPrimary', 'text-white', 'shadow-lg', 'shadow-youthPrimary/20');
+                }
+            });
+            renderLessons(cat);
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        }
+
+        window.onload = () => {
+            fetchVerse();
+            renderLessons();
+        };
+
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) closeModal();
+        });
+    </script>
+</body>
+</html>
