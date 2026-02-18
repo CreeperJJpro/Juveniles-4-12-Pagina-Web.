@@ -174,6 +174,13 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Botón de Prueba -->
+            <div class="mt-12 text-center">
+                <button onclick="sendTestNotification()" class="inline-flex items-center gap-2 text-gray-400 dark:text-gray-500 hover:text-youthPrimary dark:hover:text-youthPrimary transition text-xs font-bold uppercase tracking-widest border border-dashed border-gray-300 dark:border-gray-700 px-4 py-2 rounded-full">
+                    <i data-lucide="terminal" class="w-3 h-3"></i> Notificación de Prueba
+                </button>
+            </div>
         </div>
     </section>
 
@@ -227,23 +234,17 @@
             { id: 5, title: "Biblia 101", date: "18 Ene, 2024", category: "Fe", content: "Herramientas prácticas para que tu tiempo con Dios sea dinámico y profundo. No es solo leer, es conectar con el autor de la vida." }
         ];
 
-        // Diccionario para manejar múltiples eventos de forma independiente
         let activeTimeouts = {
             jueves: []
         };
 
         lucide.createIcons();
 
-        // Función para actualizar la interfaz según el permiso de notificaciones
         function checkNotificationStatus() {
             if (!("Notification" in window)) return;
-            
-            // Si está permitido, activamos el modo visual "Programado"
             if (Notification.permission === "granted") {
                 setUIAsProgrammed('jueves');
-            } 
-            // Si está bloqueado o por defecto, forzamos el estado inicial (para que pida permiso al hacer clic)
-            else {
+            } else {
                 resetReminderButton('jueves');
             }
         }
@@ -260,16 +261,14 @@
             }
         }
 
-        // LÓGICA DE NOTIFICACIONES PROGRAMADAS
         async function scheduleNotifications(eventId) {
             if (!("Notification" in window)) {
                 alert("Este navegador no soporta notificaciones.");
                 return;
             }
 
-            // Si el permiso ya está denegado, informamos al usuario
             if (Notification.permission === "denied") {
-                alert("Has bloqueado las notificaciones. Por favor, cámbialo en la configuración de tu navegador para que podamos recordarte el evento.");
+                alert("Has bloqueado las notificaciones. Cámbialo en la configuración del navegador.");
                 return;
             }
 
@@ -278,7 +277,6 @@
             if (permission === "granted") {
                 setUIAsProgrammed(eventId);
                 
-                // Limpiar timeouts previos del evento específico antes de reprogramar
                 activeTimeouts[eventId].forEach(id => clearTimeout(id));
                 activeTimeouts[eventId] = [];
 
@@ -286,7 +284,6 @@
                 let eventTime = new Date();
                 
                 if (eventId === 'jueves') {
-                    // Próximo jueves a las 9 PM (Day 4)
                     eventTime.setDate(now.getDate() + (4 + 7 - now.getDay()) % 7);
                     eventTime.setHours(21, 0, 0, 0);
                     if (eventTime <= now) eventTime.setDate(eventTime.getDate() + 7);
@@ -294,8 +291,8 @@
 
                 const timesToNotify = [
                     { time: 30, msg: "¡Faltan 30 minutos! Te esperamos en la Reunión Online de Juveniles." },
-                    { time: 15, msg: "¡Solo 15 minutos! Prepara tu conexión para la reunión." },
-                    { time: 0, msg: "¡ESTAMOS EN VIVO! Entra a la reunión ahora mismo." }
+                    { time: 15, msg: "¡Solo 15 minutos! Prepara tu conexión." },
+                    { time: 0, msg: "¡ESTAMOS EN VIVO! Entra ahora mismo." }
                 ];
 
                 timesToNotify.forEach(notif => {
@@ -317,14 +314,33 @@
             }
         }
 
+        async function sendTestNotification() {
+            if (!("Notification" in window)) {
+                alert("Las notificaciones no son compatibles con este navegador.");
+                return;
+            }
+
+            if (Notification.permission === "granted") {
+                new Notification("Prueba de MJS", {
+                    body: "¡Funciona! Así recibirás los avisos de nuestras reuniones.",
+                    icon: "https://cdn-icons-png.flaticon.com/512/3652/3652191.png"
+                });
+            } else if (Notification.permission !== "denied") {
+                const permission = await Notification.requestPermission();
+                if (permission === "granted") {
+                    sendTestNotification();
+                }
+            } else {
+                alert("Permiso denegado. Habilita las notificaciones en la barra de direcciones del navegador.");
+            }
+        }
+
         function cancelNotifications(eventId) {
-            // Solo limpia los recordatorios de este evento específico
             if (activeTimeouts[eventId]) {
                 activeTimeouts[eventId].forEach(id => clearTimeout(id));
                 activeTimeouts[eventId] = [];
             }
             resetReminderButton(eventId);
-            console.log(`Notificaciones desactivadas para el evento: ${eventId}`);
         }
 
         function resetReminderButton(eventId) {
@@ -338,8 +354,6 @@
                 lucide.createIcons();
             }
         }
-
-        // --- Resto de funciones del sitio ---
 
         const modalOverlay = document.getElementById('modal-overlay');
         const modalContent = document.getElementById('modal-content');
@@ -436,7 +450,6 @@
         window.onload = () => {
             fetchVerse();
             renderLessons();
-            // Verificación automática de estado al refrescar
             checkNotificationStatus();
         };
 
